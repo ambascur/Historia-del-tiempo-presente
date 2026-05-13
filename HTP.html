@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Historia del Presente — Infografía Interactiva</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0f;
+  --surface: #13131a;
+  --surface2: #1c1c28;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.15);
+  --text: #e8e6f0;
+  --muted: #7a7890;
+  --accent: #c4b5fd;
+  --accent2: #818cf8;
+  --gold: #fbbf24;
+  --teal: #2dd4bf;
+  --coral: #fb7185;
+  --green: #4ade80;
+  --font-display: 'DM Serif Display', serif;
+  --font-body: 'DM Sans', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.7;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── NAV ── */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 2rem;
+  background: rgba(10,10,15,0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+.nav-title { font-family: var(--font-mono); font-size: 12px; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; }
+.nav-steps { display: flex; gap: 6px; }
+.nav-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.nav-dot.visited { background: var(--accent2); border-color: var(--accent2); }
+.nav-dot.active { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 8px var(--accent); }
+.btn-full {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: transparent;
+  border: 1px solid var(--border2);
+  color: var(--muted);
+  padding: 6px 14px;
+  border-radius: 100px;
+  cursor: pointer;
+  transition: all 0.25s;
+  display: none;
+}
+.btn-full.visible { display: block; }
+.btn-full:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ── SECTIONS ── */
+.section {
+  min-height: 100vh;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 6rem 2rem 4rem;
+  max-width: 860px;
+  margin: 0 auto;
+}
+.section.active { display: flex; }
+
+/* ── CANVAS PARTICLE BG ── */
+#particle-canvas {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.4;
+}
+
+.section-content { position: relative; z-index: 1; width: 100%; }
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes glitch {
+  0%, 100% { transform: translate(0); }
+  20% { transform: translate(-2px, 1px); }
+  40% { transform: translate(2px, -1px); }
+  60% { transform: translate(-1px, 2px); }
+  80% { transform: translate(1px, -2px); }
+}
+@keyframes scanline {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+@keyframes zoomPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+
+.anim-fade-up { animation: fadeUp 0.7s ease forwards; }
+.anim-delay-1 { animation-delay: 0.1s; opacity: 0; }
+.anim-delay-2 { animation-delay: 0.2s; opacity: 0; }
+.anim-delay-3 { animation-delay: 0.35s; opacity: 0; }
+.anim-delay-4 { animation-delay: 0.5s; opacity: 0; }
+.anim-delay-5 { animation-delay: 0.65s; opacity: 0; }
+
+/* ── TYPOGRAPHY ── */
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent2);
+  margin-bottom: 0.75rem;
+}
+.display-title {
+  font-family: var(--font-display);
+  font-size: clamp(36px, 6vw, 64px);
+  line-height: 1.1;
+  color: var(--text);
+  margin-bottom: 1rem;
+}
+.display-title em { color: var(--accent); font-style: italic; }
+.body-text { color: var(--muted); font-size: 15px; line-height: 1.8; max-width: 560px; }
+.section-title {
+  font-family: var(--font-display);
+  font-size: clamp(24px, 4vw, 38px);
+  line-height: 1.2;
+  margin-bottom: 0.5rem;
+}
+
+/* ── NEXT BUTTON ── */
+.next-btn {
+  margin-top: 2.5rem;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: transparent;
+  border: 1px solid var(--border2);
+  color: var(--text);
+  padding: 10px 24px;
+  border-radius: 100px;
+  cursor: pointer;
+  transition: all 0.25s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.next-btn:hover { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 20px rgba(196,181,253,0.15); }
+.next-btn::after { content: '→'; }
+
+/* ── SEC 0: HERO ── */
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  align-items: center;
+  width: 100%;
+}
+.ascii-art {
+  font-family: var(--font-mono);
+  font-size: clamp(5px, 1.1vw, 9px);
+  line-height: 1.15;
+  color: var(--accent2);
+  opacity: 0.7;
+  white-space: pre;
+  animation: zoomPulse 6s ease-in-out infinite;
+  user-select: none;
+}
+.hero-meta { display: flex; flex-direction: column; gap: 1.5rem; }
+.tag-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.tag {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 4px 12px;
+  border-radius: 100px;
+  border: 1px solid;
+}
+.tag-purple { border-color: var(--accent); color: var(--accent); }
+.tag-teal { border-color: var(--teal); color: var(--teal); }
+.tag-gold { border-color: var(--gold); color: var(--gold); }
+
+/* ── SEC 1: ORIGEN ── */
+.timeline-v {
+  position: relative;
+  padding-left: 2rem;
+  margin-top: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.tl-spine {
+  position: absolute;
+  left: 7px; top: 6px; bottom: 6px;
+  width: 1px;
+  background: linear-gradient(to bottom, var(--accent2), var(--teal), transparent);
+}
+.tl-item {
+  display: flex;
+  gap: 1.25rem;
+  padding: 0.9rem 0;
+  align-items: flex-start;
+  cursor: default;
+  position: relative;
+}
+.tl-node {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--accent2);
+  background: var(--bg);
+  flex-shrink: 0;
+  margin-top: 3px;
+  position: absolute;
+  left: -1.85rem;
+  transition: all 0.3s;
+  z-index: 1;
+}
+.tl-item:hover .tl-node { background: var(--accent2); box-shadow: 0 0 12px var(--accent2); }
+.tl-year-label { font-family: var(--font-mono); font-size: 11px; color: var(--accent2); min-width: 40px; padding-top: 2px; }
+.tl-body strong { font-size: 14px; font-weight: 500; color: var(--text); }
+.tl-body p { font-size: 13px; color: var(--muted); line-height: 1.6; margin-top: 2px; }
+
+/* ── SEC 2: METODOLOGÍAS ── */
+.methods-container { width: 100%; }
+.methods-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1.5rem; }
+.m-tab {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  padding: 7px 14px;
+  border-radius: 100px;
+  border: 1px solid var(--border2);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.m-tab:hover { border-color: var(--accent2); color: var(--text); }
+.m-tab.active { background: var(--accent); color: #0a0a0f; border-color: var(--accent); font-weight: 500; }
+.m-tab.done { border-color: var(--accent2); color: var(--accent2); }
+.method-detail {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 16px;
+  padding: 2rem;
+  animation: scaleIn 0.3s ease forwards;
+}
+.md-number { font-family: var(--font-mono); font-size: 11px; color: var(--muted); margin-bottom: 0.5rem; }
+.md-title { font-family: var(--font-display); font-size: 26px; color: var(--text); margin-bottom: 1rem; }
+.md-body { color: var(--muted); font-size: 14px; line-height: 1.8; margin-bottom: 1.5rem; }
+.md-books { display: flex; flex-wrap: wrap; gap: 8px; }
+.md-book {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 5px 12px;
+  border-radius: 8px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+.progress-bar { height: 2px; background: var(--border); border-radius: 2px; margin-top: 1.5rem; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(to right, var(--accent2), var(--accent)); transition: width 0.4s ease; border-radius: 2px; }
+.methods-nav-btns { display: flex; gap: 10px; margin-top: 1rem; }
+.mn-btn {
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em;
+  text-transform: uppercase; background: transparent; border: 1px solid var(--border2);
+  color: var(--muted); padding: 8px 18px; border-radius: 100px; cursor: pointer;
+  transition: all 0.2s;
+}
+.mn-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ── SEC 3: 4 ELEMENTOS ── */
+.four-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 1.5rem; }
+.elem-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.25rem 1.5rem;
+  transition: all 0.3s;
+  cursor: default;
+  position: relative;
+  overflow: hidden;
+}
+.elem-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.elem-card:hover { transform: translateY(-2px); border-color: var(--border2); }
+.elem-card:hover::before { opacity: 1; }
+.e1::before { background: radial-gradient(ellipse at top left, rgba(196,181,253,0.06), transparent 70%); }
+.e2::before { background: radial-gradient(ellipse at top left, rgba(45,212,191,0.06), transparent 70%); }
+.e3::before { background: radial-gradient(ellipse at top left, rgba(251,191,36,0.06), transparent 70%); }
+.e4::before { background: radial-gradient(ellipse at top left, rgba(129,140,248,0.06), transparent 70%); }
+.elem-num {
+  font-family: var(--font-display);
+  font-size: 42px;
+  line-height: 1;
+  margin-bottom: 0.5rem;
+  opacity: 0.25;
+}
+.e1 .elem-num { color: var(--accent); }
+.e2 .elem-num { color: var(--teal); }
+.e3 .elem-num { color: var(--gold); }
+.e4 .elem-num { color: var(--accent2); }
+.elem-label { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+.elem-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+/* ── SEC 4: TENSIÓN ── */
+.tension-wrapper { width: 100%; margin-top: 1.5rem; }
+.vs-grid { display: grid; grid-template-columns: 1fr auto 1fr; gap: 1.5rem; align-items: center; margin-bottom: 2rem; }
+.vs-side {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.5rem;
+}
+.vs-label { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.75rem; }
+.vs-label.pos { color: var(--coral); }
+.vs-label.htp { color: var(--teal); }
+.vs-text { font-size: 13px; color: var(--muted); line-height: 1.7; }
+.vs-sep { font-family: var(--font-display); font-size: 28px; color: var(--muted); text-align: center; opacity: 0.4; }
+.tension-q {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: clamp(18px, 3vw, 24px);
+  color: var(--text);
+  line-height: 1.4;
+  text-align: center;
+  padding: 2rem;
+  border: 1px solid var(--border2);
+  border-radius: 14px;
+  background: var(--surface);
+  margin-bottom: 2rem;
+}
+.authors-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 1rem; }
+.author-chip {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 6px 14px;
+  border-radius: 100px;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.author-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+/* ── FULL VIEW ── */
+#full-view {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  z-index: 200;
+  overflow-y: auto;
+  padding: 3rem 2rem;
+}
+#full-view.open { display: block; }
+.full-inner { max-width: 900px; margin: 0 auto; }
+.full-close {
+  position: fixed;
+  top: 1.5rem; right: 1.5rem;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  color: var(--muted);
+  padding: 8px 16px;
+  border-radius: 100px;
+  cursor: pointer;
+  z-index: 201;
+  transition: all 0.2s;
+}
+.full-close:hover { border-color: var(--coral); color: var(--coral); }
+.full-hero { padding: 4rem 0 3rem; border-bottom: 1px solid var(--border); margin-bottom: 3rem; display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: center; }
+.full-section { margin-bottom: 3rem; padding-bottom: 3rem; border-bottom: 1px solid var(--border); }
+.full-section:last-child { border-bottom: none; }
+.full-sec-title { font-family: var(--font-display); font-size: 28px; color: var(--text); margin-bottom: 1.5rem; }
+.full-tl { display: flex; gap: 2rem; flex-wrap: wrap; }
+.full-tl-item { flex: 1; min-width: 160px; padding: 1rem; background: var(--surface); border-radius: 10px; border: 1px solid var(--border); }
+.full-tl-year { font-family: var(--font-mono); font-size: 11px; color: var(--accent2); margin-bottom: 4px; }
+.full-tl-text { font-size: 12px; color: var(--muted); line-height: 1.5; }
+.full-methods { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.full-method { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.1rem 1.25rem; }
+.full-m-num { font-family: var(--font-mono); font-size: 10px; color: var(--muted); margin-bottom: 4px; }
+.full-m-title { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 6px; }
+.full-m-body { font-size: 12px; color: var(--muted); line-height: 1.6; }
+.full-four { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.full-elem { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; text-align: center; }
+.full-elem-n { font-family: var(--font-display); font-size: 28px; opacity: 0.3; margin-bottom: 4px; }
+.full-elem-label { font-size: 12px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+.full-elem-desc { font-size: 11px; color: var(--muted); line-height: 1.5; }
+.full-vs { display: grid; grid-template-columns: 1fr auto 1fr; gap: 1rem; align-items: center; }
+
+@media (max-width: 600px) {
+  .hero-grid, .full-hero, .full-four { grid-template-columns: 1fr; }
+  .vs-grid, .full-vs { grid-template-columns: 1fr; }
+  .vs-sep { display: none; }
+  .four-grid { grid-template-columns: 1fr; }
+  .ascii-art { font-size: 6px; }
+}
+</style>
+</head>
+<body>
+
+<canvas id="particle-canvas"></canvas>
+
+<nav>
+  <span class="nav-title">Historia del Presente</span>
+  <div class="nav-steps">
+    <div class="nav-dot active" id="dot-0" onclick="goTo(0)" title="Intro"></div>
+    <div class="nav-dot" id="dot-1" onclick="goTo(1)" title="Origen"></div>
+    <div class="nav-dot" id="dot-2" onclick="goTo(2)" title="Metodologías"></div>
+    <div class="nav-dot" id="dot-3" onclick="goTo(3)" title="4 Elementos"></div>
+    <div class="nav-dot" id="dot-4" onclick="goTo(4)" title="Tensión central"></div>
+  </div>
+  <button class="btn-full" id="btn-full" onclick="openFull()">Ver completa ↗</button>
+</nav>
+
+<!-- ══════════════ SECTION 0: HERO ══════════════ -->
+<div class="section active" id="sec-0">
+  <div class="section-content">
+    <div class="hero-grid">
+      <div class="hero-meta">
+        <div class="eyebrow anim-fade-up anim-delay-1">Corriente historiográfica · siglo XX</div>
+        <div class="display-title anim-fade-up anim-delay-2">Historia<br><em>del presente</em></div>
+        <p class="body-text anim-fade-up anim-delay-3">Una corriente que rompe con la exigencia de distancia temporal: el historiador puede — y debe — estudiar aquello que aún está <em>vivo</em>, sin cerrar, mientras existan testigos.</p>
+        <div class="tag-row anim-fade-up anim-delay-4">
+          <span class="tag tag-purple">Memoria</span>
+          <span class="tag tag-teal">Testimonio oral</span>
+          <span class="tag tag-gold">Interdisciplinar</span>
+        </div>
+        <button class="next-btn anim-fade-up anim-delay-5" onclick="goTo(1)">Origen histórico</button>
+      </div>
+      <div class="ascii-art anim-fade-up anim-delay-3" id="ascii-hero" aria-hidden="true"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ SECTION 1: ORIGEN ══════════════ -->
+<div class="section" id="sec-1">
+  <div class="section-content">
+    <div class="eyebrow anim-fade-up anim-delay-1">01 / Origen e institucionalización</div>
+    <div class="section-title anim-fade-up anim-delay-2">¿Cómo nació esta corriente?</div>
+    <p class="body-text anim-fade-up anim-delay-3" style="margin-bottom: 1rem;">La Segunda Guerra Mundial forzó la pregunta: ¿hay que esperar 50 años para hacer historia de algo que está destruyendo Europa <em>ahora mismo</em>?</p>
+    <div class="timeline-v anim-fade-up anim-delay-4">
+      <div class="tl-spine"></div>
+      <div class="tl-item">
+        <div class="tl-node" style="border-color: var(--coral);"></div>
+        <div class="tl-year-label" style="color: var(--coral);">1944</div>
+        <div class="tl-body">
+          <strong>El primer impulso</strong>
+          <p>De Gaulle crea una comisión para estudiar la Ocupación y la Liberación mientras aún están ocurriendo. Necesidad antes que teoría.</p>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-node" style="border-color: var(--gold);"></div>
+        <div class="tl-year-label" style="color: var(--gold);">1951</div>
+        <div class="tl-body">
+          <strong>Comité de historia de la IIGM</strong>
+          <p>Primer organismo dedicado al estudio histórico de un conflicto con testigos vivos todavía activos.</p>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-node" style="border-color: var(--accent);"></div>
+        <div class="tl-year-label" style="color: var(--accent);">1978</div>
+        <div class="tl-body">
+          <strong>Fundación del IHTP, París</strong>
+          <p><em>Institut d'Histoire du Temps Présent.</em> François Bédarida, director fundador. Institucionalización oficial de la corriente.</p>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-node" style="border-color: var(--teal);"></div>
+        <div class="tl-year-label" style="color: var(--teal);">1986</div>
+        <div class="tl-body">
+          <strong>Stone, <em>El pasado y el presente</em></strong>
+          <p>Debate metodológico sobre la relación entre narración histórica y el tiempo presente del historiador.</p>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-node" style="border-color: var(--accent2);"></div>
+        <div class="tl-year-label" style="color: var(--accent2);">1991</div>
+        <div class="tl-body">
+          <strong>Le Goff, <em>Pensar la historia</em></strong>
+          <p>"Modernidad", "presente" y "progreso" como categorías que el historiador proyecta desde su propio tiempo.</p>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-node" style="border-color: var(--green);"></div>
+        <div class="tl-year-label" style="color: var(--green);">2004</div>
+        <div class="tl-body">
+          <strong>Aróstegui, <em>La historia vivida</em></strong>
+          <p>Sistematización teórica en el mundo hispánico. Define los cuatro elementos constitutivos de la HTP.</p>
+        </div>
+      </div>
+    </div>
+    <button class="next-btn" onclick="goTo(2)" style="margin-top: 1.5rem;">Sus metodologías</button>
+  </div>
+</div>
+
+<!-- ══════════════ SECTION 2: METODOLOGÍAS ══════════════ -->
+<div class="section" id="sec-2">
+  <div class="section-content">
+    <div class="eyebrow">02 / Metodologías</div>
+    <div class="section-title">¿Cómo trabaja el historiador del presente?</div>
+    <p class="body-text" style="margin: 0.5rem 0 1.5rem;">Cinco herramientas que la distinguen de otras corrientes. Recorre todas para continuar.</p>
+    <div class="methods-container">
+      <div class="methods-tabs" id="m-tabs">
+        <button class="m-tab active" onclick="showMethod(0)">Historia oral</button>
+        <button class="m-tab" onclick="showMethod(1)">Interdisciplinar</button>
+        <button class="m-tab" onclick="showMethod(2)">Contemporaneidad</button>
+        <button class="m-tab" onclick="showMethod(3)">Fuentes nuevas</button>
+        <button class="m-tab" onclick="showMethod(4)">Demanda social</button>
+      </div>
+      <div class="method-detail" id="m-detail">
+        <div class="md-number" id="md-num">Metodología 1 de 5</div>
+        <div class="md-title" id="md-title">Historia oral y testimonio</div>
+        <div class="md-body" id="md-body">El testimonio del testigo vivo es fuente legítima, no anécdota. La HTP lo trata con el mismo rigor crítico que cualquier documento: se contrasta, se cruza, se interroga. Rompe con el fetichismo del documento escrito heredado del positivismo del siglo XIX.</div>
+        <div class="md-books" id="md-books">
+          <span class="md-book">Stone — El pasado y el presente</span>
+          <span class="md-book">Bloch — Apología</span>
+          <span class="md-book">Prost — Doce lecciones</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" id="m-progress" style="width: 20%"></div></div>
+      </div>
+      <div class="methods-nav-btns">
+        <button class="mn-btn" onclick="prevMethod()">← Anterior</button>
+        <button class="mn-btn" id="mn-next-btn" onclick="nextMethodOrContinue()">Siguiente →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ SECTION 3: 4 ELEMENTOS ══════════════ -->
+<div class="section" id="sec-3">
+  <div class="section-content">
+    <div class="eyebrow">03 / Los cuatro elementos</div>
+    <div class="section-title">Los pilares según Aróstegui (2004)</div>
+    <p class="body-text" style="margin-bottom: 1.5rem;">La HTP comprende cuatro grandes elementos constitutivos que guían la investigación del historiador.</p>
+    <div class="four-grid">
+      <div class="elem-card e1 anim-fade-up anim-delay-1">
+        <div class="elem-num">I</div>
+        <div class="elem-label" style="color: var(--accent);">El testigo</div>
+        <div class="elem-desc">Sujeto que vivió los hechos. Fuente viva que el historiador puede interrogar directamente, a diferencia de cualquier época anterior.</div>
+      </div>
+      <div class="elem-card e2 anim-fade-up anim-delay-2">
+        <div class="elem-num" style="color: var(--teal);">II</div>
+        <div class="elem-label" style="color: var(--teal);">La memoria</div>
+        <div class="elem-desc">Individual y colectiva. Materia prima del análisis histórico reciente. La HTP la convierte en fuente, no solo en objeto de estudio.</div>
+      </div>
+      <div class="elem-card e3 anim-fade-up anim-delay-3">
+        <div class="elem-num" style="color: var(--gold);">III</div>
+        <div class="elem-label" style="color: var(--gold);">La demanda social</div>
+        <div class="elem-desc">El historiador responde a preguntas urgentes de su propia sociedad. Su trabajo es también un acto político y ético.</div>
+      </div>
+      <div class="elem-card e4 anim-fade-up anim-delay-4">
+        <div class="elem-num" style="color: var(--accent2);">IV</div>
+        <div class="elem-label" style="color: var(--accent2);">El acontecimiento</div>
+        <div class="elem-desc">Lo reciente e inconcluso como objeto de estudio históricamente válido. El "final" del objeto es móvil por definición.</div>
+      </div>
+    </div>
+    <button class="next-btn" onclick="goTo(4)" style="margin-top: 1.5rem;">La tensión central</button>
+  </div>
+</div>
+
+<!-- ══════════════ SECTION 4: TENSIÓN ══════════════ -->
+<div class="section" id="sec-4">
+  <div class="section-content">
+    <div class="eyebrow">04 / La pregunta sin resolver</div>
+    <div class="section-title">La tensión epistemológica</div>
+    <div class="tension-wrapper">
+      <div class="tension-q">"¿Puede haber historia rigurosa<br>sin distancia temporal suficiente?"</div>
+      <div class="vs-grid">
+        <div class="vs-side">
+          <div class="vs-label pos">Positivismo (Ranke, s. XIX)</div>
+          <div class="vs-text">Se necesitan al menos 50 años y documentos de archivo cerrados para hacer historia con rigor. La cercanía genera parcialidad inevitable.</div>
+        </div>
+        <div class="vs-sep">vs</div>
+        <div class="vs-side">
+          <div class="vs-label htp">Historia del presente</div>
+          <div class="vs-text">La distancia no garantiza objetividad. El presente también es objeto histórico legítimo. La cercanía es una ventaja metodológica, no una debilidad.</div>
+        </div>
+      </div>
+      <div style="margin-top: 1.5rem;">
+        <div class="eyebrow" style="margin-bottom: 0.75rem;">Autores que sostienen esta corriente</div>
+        <div class="authors-row">
+          <span class="author-chip"><span class="author-dot" style="background: var(--accent);"></span>Le Goff — Pensar la historia</span>
+          <span class="author-chip"><span class="author-dot" style="background: var(--teal);"></span>Stone — El pasado y el presente</span>
+          <span class="author-chip"><span class="author-dot" style="background: var(--gold);"></span>Carr — ¿Qué es la historia?</span>
+          <span class="author-chip"><span class="author-dot" style="background: var(--accent2);"></span>Bédarida — IHTP</span>
+          <span class="author-chip"><span class="author-dot" style="background: var(--green);"></span>Aróstegui — La historia vivida</span>
+          <span class="author-chip"><span class="author-dot" style="background: var(--coral);"></span>Prost — Doce lecciones</span>
+        </div>
+      </div>
+      <div style="margin-top: 2rem; padding: 1.25rem; background: var(--surface); border: 1px solid var(--border2); border-radius: 12px; font-family: var(--font-mono); font-size: 11px; color: var(--muted); line-height: 1.8;">
+        Fuentes: Bédarida (1998); Aróstegui (2004); Le Goff (1991); Stone (1986); IHTP, París.
+      </div>
+      <button class="next-btn" onclick="openFull()" style="margin-top: 1.5rem;">Ver infografía completa ↗</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ FULL VIEW ══════════════ -->
+<div id="full-view">
+  <button class="full-close" onclick="closeFull()">✕ Cerrar</button>
+  <div class="full-inner">
+
+    <div class="full-hero">
+      <div>
+        <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent2); margin-bottom: 0.75rem;">Corriente historiográfica · siglo XX</div>
+        <div style="font-family: var(--font-display); font-size: 48px; line-height: 1.1; margin-bottom: 1rem;">Historia<br><em style="color: var(--accent);">del presente</em></div>
+        <p style="color: var(--muted); font-size: 14px; line-height: 1.8; max-width: 420px;">El historiador puede — y debe — estudiar aquello que aún está vivo, sin cerrar, mientras existan testigos. Rompe con la exigencia positivista de distancia temporal.</p>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 1rem;">
+          <span class="tag tag-purple">Memoria</span>
+          <span class="tag tag-teal">Testimonio oral</span>
+          <span class="tag tag-gold">Interdisciplinar</span>
+        </div>
+      </div>
+      <div class="ascii-art" id="ascii-full" aria-hidden="true"></div>
+    </div>
+
+    <div class="full-section">
+      <div class="full-sec-title">Origen e institucionalización</div>
+      <div class="full-tl">
+        <div class="full-tl-item"><div class="full-tl-year">1944</div><div style="font-size: 12px; font-weight: 500; color: var(--text); margin-bottom: 2px;">Impulso fundacional</div><div class="full-tl-text">Comisión de De Gaulle para estudiar la Ocupación en curso.</div></div>
+        <div class="full-tl-item"><div class="full-tl-year">1951</div><div style="font-size: 12px; font-weight: 500; color: var(--text); margin-bottom: 2px;">Comité IIGM</div><div class="full-tl-text">Historia de un conflicto con testigos todavía vivos.</div></div>
+        <div class="full-tl-item"><div class="full-tl-year">1978</div><div style="font-size: 12px; font-weight: 500; color: var(--text); margin-bottom: 2px;">Fundación IHTP</div><div class="full-tl-text">Institut d'Histoire du Temps Présent. Bédarida, director.</div></div>
+        <div class="full-tl-item"><div class="full-tl-year">1986–2004</div><div style="font-size: 12px; font-weight: 500; color: var(--text); margin-bottom: 2px;">Corpus teórico</div><div class="full-tl-text">Stone, Le Goff, Aróstegui sistematizan la corriente.</div></div>
+      </div>
+    </div>
+
+    <div class="full-section">
+      <div class="full-sec-title">Metodologías</div>
+      <div class="full-methods">
+        <div class="full-method"><div class="full-m-num">01</div><div class="full-m-title">Historia oral y testimonio</div><div class="full-m-body">El testigo vivo es fuente legítima, tratada con rigor crítico igual que el documento escrito.</div></div>
+        <div class="full-method"><div class="full-m-num">02</div><div class="full-m-title">Interdisciplinariedad</div><div class="full-m-body">Diálogo con sociología, antropología, ciencia política y psicología social.</div></div>
+        <div class="full-method"><div class="full-m-num">03</div><div class="full-m-title">El historiador como contemporáneo</div><div class="full-m-body">Reconoce su posición en el presente. No es debilidad: es ventaja metodológica.</div></div>
+        <div class="full-method"><div class="full-m-num">04</div><div class="full-m-title">Ampliación de fuentes</div><div class="full-m-body">Fotografías, filmaciones, prensa, archivos digitales, redes de memoria.</div></div>
+        <div class="full-method"><div class="full-m-num">05</div><div class="full-m-title">Demanda social</div><div class="full-m-body">El historiador responde a preguntas urgentes de su propia sociedad y época.</div></div>
+      </div>
+    </div>
+
+    <div class="full-section">
+      <div class="full-sec-title">Los cuatro elementos constitutivos</div>
+      <div class="full-four">
+        <div class="full-elem"><div class="full-elem-n" style="color: var(--accent);">I</div><div class="full-elem-label" style="color: var(--accent);">El testigo</div><div class="full-elem-desc">Sujeto que vivió los hechos. Fuente viva e interrogable.</div></div>
+        <div class="full-elem"><div class="full-elem-n" style="color: var(--teal);">II</div><div class="full-elem-label" style="color: var(--teal);">La memoria</div><div class="full-elem-desc">Individual y colectiva. Materia prima del análisis.</div></div>
+        <div class="full-elem"><div class="full-elem-n" style="color: var(--gold);">III</div><div class="full-elem-label" style="color: var(--gold);">Demanda social</div><div class="full-elem-desc">Preguntas urgentes de la propia sociedad del historiador.</div></div>
+        <div class="full-elem"><div class="full-elem-n" style="color: var(--accent2);">IV</div><div class="full-elem-label" style="color: var(--accent2);">El acontecimiento</div><div class="full-elem-desc">Lo reciente e inconcluso como objeto válido.</div></div>
+      </div>
+    </div>
+
+    <div class="full-section">
+      <div class="full-sec-title">La tensión central</div>
+      <div style="font-family: var(--font-display); font-style: italic; font-size: 22px; text-align: center; padding: 1.5rem; background: var(--surface); border: 1px solid var(--border2); border-radius: 12px; margin-bottom: 1.5rem; line-height: 1.4;">"¿Puede haber historia rigurosa sin distancia temporal suficiente?"</div>
+      <div class="full-vs">
+        <div class="vs-side"><div class="vs-label pos">Positivismo</div><div class="vs-text">50 años de distancia mínima. Solo documentos de archivo cerrados garantizan rigor.</div></div>
+        <div class="vs-sep">vs</div>
+        <div class="vs-side"><div class="vs-label htp">Historia del presente</div><div class="vs-text">La distancia no garantiza objetividad. La cercanía es una ventaja metodológica.</div></div>
+      </div>
+      <div style="margin-top: 1.5rem; font-family: var(--font-mono); font-size: 11px; color: var(--muted); line-height: 1.8; padding: 1rem; background: var(--surface); border-radius: 8px; border: 1px solid var(--border);">
+        Fuentes: Bédarida (1998) · Aróstegui (2004) · Le Goff (1991) · Stone (1986) · IHTP, París
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ── PARTICLE SYSTEM ──
+const canvas = document.getElementById('particle-canvas');
+const ctx = canvas.getContext('2d');
+let W, H, pts = [], mouse = { x: -999, y: -999 };
+
+function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+window.addEventListener('resize', resize);
+resize();
+
+for (let i = 0; i < 120; i++) {
+  pts.push({ x: Math.random() * W, y: Math.random() * H, vx: (Math.random()-0.5)*0.4, vy: (Math.random()-0.5)*0.4, r: Math.random()*1.5+0.5 });
+}
+
+window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+
+function drawParticles() {
+  ctx.clearRect(0, 0, W, H);
+  for (let p of pts) {
+    p.x += p.vx; p.y += p.vy;
+    if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+    if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba(196,181,253,0.6)';
+    ctx.fill();
+    for (let q of pts) {
+      const dx = p.x - q.x, dy = p.y - q.y;
+      const d = Math.sqrt(dx*dx + dy*dy);
+      if (d < 100) {
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y);
+        ctx.strokeStyle = `rgba(129,140,248,${0.15 * (1 - d/100)})`;
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+      }
+    }
+  }
+  requestAnimationFrame(drawParticles);
+}
+drawParticles();
+
+// ── ASCII ART ──
+const asciiFrames = [
+`  . · . · . · . · . · .
+·   ╔═══════════════╗   ·
+  . ║  H I S T O R  ║ . 
+·   ║  I A   D E L  ║   ·
+  . ║  P R E S E N  ║ .
+·   ║  T E         ║   ·
+  . ╚═══════════════╝ .
+·  · · · ○ · · · ○ · ·
+ . ○ . . . . . . . . ○ 
+·   · ·  P A S T  · ·  ·
+  .   · · E D  · · .
+·  · ○ · F U T U R E · ·
+ .  · · · · ○ · · · · .`,
+`  ░ ░ ░ ░ ░ ░ ░ ░ ░ ░ 
+░ ▓ ░ T E S T I G O ░ ▓
+  ░ ▓ ░ ░ ░ ░ ░ ░ ▓ ░
+░ ░ ▓ M E M O R I A ▓ ░
+  ░ ░ ▓ ░ ░ ░ ░ ▓ ░ ░
+░ ░ ░ ▓ A H O R A ▓ ░ ░
+  ░ ░ ░ ▓ ░ ░ ░ ▓ ░ ░ 
+░ ░ ░ ░ ▒ H T P ▒ ░ ░ ░
+  ░ ░ ░ ░ ▒ ░ ░ ▒ ░ ░ 
+░ ░ ░ ░ ░ ▒▒▒▒▒ ░ ░ ░ ░
+  ░ ░ ░ ░ ░ ░ ░ ░ ░ ░ `,
+`  · · · · · · · · · · ·
+·  ┌─────────────────┐ ·
+  ·│ 1944 ··· 1978   │·
+· ·│ IHTP fundado    │ ·
+  ·│ Bédarida >>>    │·
+· ·│ Le Goff  >>>    │ ·
+  ·│ Stone    >>>    │·
+· ·│ Aróstegui >>>   │ ·
+  ·└─────────────────┘·
+·  · · · · · · · · · ·  ·`
+];
+
+let asciiIdx = 0;
+function rotateAscii() {
+  const el1 = document.getElementById('ascii-hero');
+  const el2 = document.getElementById('ascii-full');
+  const frame = asciiFrames[asciiIdx % asciiFrames.length];
+  if (el1) el1.textContent = frame;
+  if (el2) el2.textContent = frame;
+  asciiIdx++;
+  setTimeout(rotateAscii, 3200);
+}
+rotateAscii();
+
+// ── NAVIGATION ──
+let visited = new Set([0]);
+let currentSection = 0;
+
+function goTo(n) {
+  document.getElementById('sec-' + currentSection).classList.remove('active');
+  document.getElementById('dot-' + currentSection).classList.remove('active');
+  currentSection = n;
+  visited.add(n);
+  const sec = document.getElementById('sec-' + n);
+  sec.classList.add('active');
+  sec.querySelectorAll('[class*="anim-delay"]').forEach(el => {
+    el.style.animation = 'none';
+    el.offsetHeight;
+    el.style.animation = '';
+  });
+  updateDots();
+  checkFullBtn();
+  window.scrollTo(0, 0);
+}
+
+function updateDots() {
+  for (let i = 0; i < 5; i++) {
+    const d = document.getElementById('dot-' + i);
+    d.className = 'nav-dot';
+    if (i === currentSection) d.classList.add('active');
+    else if (visited.has(i)) d.classList.add('visited');
+  }
+}
+
+function checkFullBtn() {
+  const btn = document.getElementById('btn-full');
+  if (visited.size >= 5) btn.classList.add('visible');
+}
+
+// ── METHODS ──
+const methods = [
+  { num: 'Metodología 1 de 5', title: 'Historia oral y testimonio', body: 'El testimonio del testigo vivo es fuente legítima, no anécdota. La HTP lo trata con el mismo rigor crítico que cualquier documento: se contrasta, se cruza, se interroga. Rompe con el fetichismo del documento escrito heredado del positivismo del siglo XIX.', books: ['Stone — El pasado y el presente', 'Bloch — Apología', 'Prost — Doce lecciones'] },
+  { num: 'Metodología 2 de 5', title: 'Interdisciplinariedad', body: 'El historiador del presente no trabaja en soledad con sus documentos. Dialoga con la sociología, la antropología, la ciencia política y la psicología social. El presente es un objeto compartido por todas las ciencias humanas.', books: ['Braudel — La historia y las ciencias sociales', 'Iggers — La historiografía del siglo XX'] },
+  { num: 'Metodología 3 de 5', title: 'El historiador como contemporáneo', body: 'El historiador reconoce que es parte del tiempo que estudia. No es una debilidad sino una postura metodológica: su posición le da acceso a preguntas, fuentes y perspectivas que el historiador "distante" no puede tener. Carr lo formuló como tesis central.', books: ['Carr — ¿Qué es la historia?', 'Le Goff — Pensar la historia'] },
+  { num: 'Metodología 4 de 5', title: 'Ampliación del repertorio de fuentes', body: 'Más allá del documento escrito de archivo: fotografías, filmaciones, prensa, testimonios orales, archivos digitales, redes de memoria. La HTP cuestiona que solo el texto institucional sea fuente válida.', books: ['Le Goff & Nora — Hacer la historia', 'Arnold — History: A very short introduction'] },
+  { num: 'Metodología 5 de 5', title: 'Respuesta a la demanda social', body: 'El historiador del presente no escribe solo para la academia. Su trabajo responde a preguntas urgentes: ¿qué pasó realmente? ¿quién fue responsable? ¿qué memoria queda? Esto lo compromete con su sociedad de forma activa.', books: ['Prost — Doce lecciones', 'Iggers — La historiografía del siglo XX'] }
+];
+
+let currentMethod = 0;
+let visitedMethods = new Set([0]);
+
+function showMethod(i) {
+  currentMethod = i;
+  visitedMethods.add(i);
+  const m = methods[i];
+  document.getElementById('md-num').textContent = m.num;
+  document.getElementById('md-title').textContent = m.title;
+  document.getElementById('md-body').textContent = m.body;
+  const booksEl = document.getElementById('md-books');
+  booksEl.innerHTML = m.books.map(b => `<span class="md-book">${b}</span>`).join('');
+  document.getElementById('m-progress').style.width = ((i+1)/5*100) + '%';
+  const tabs = document.querySelectorAll('.m-tab');
+  tabs.forEach((t, idx) => {
+    t.className = 'm-tab';
+    if (idx === i) t.classList.add('active');
+    else if (visitedMethods.has(idx)) t.classList.add('done');
+  });
+  const detail = document.getElementById('m-detail');
+  detail.style.animation = 'none'; detail.offsetHeight; detail.style.animation = 'scaleIn 0.3s ease forwards';
+  const nextBtn = document.getElementById('mn-next-btn');
+  if (visitedMethods.size >= 5) {
+    nextBtn.textContent = 'Continuar →';
+  } else {
+    nextBtn.textContent = 'Siguiente →';
+  }
+}
+
+function nextMethodOrContinue() {
+  if (currentMethod < 4) {
+    showMethod(currentMethod + 1);
+  } else {
+    goTo(3);
+  }
+}
+
+function prevMethod() {
+  if (currentMethod > 0) showMethod(currentMethod - 1);
+}
+
+// ── FULL VIEW ──
+function openFull() {
+  document.getElementById('full-view').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  document.getElementById('full-view').scrollTop = 0;
+}
+function closeFull() {
+  document.getElementById('full-view').classList.remove('open');
+  document.body.style.overflow = '';
+}
+</script>
+</body>
+</html>
